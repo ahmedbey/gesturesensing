@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Gesturesensing by ahmedbey</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Gesturesensing</h1>
+      <h2 class="project-tagline">trying to manage gestures</h2>
+      <a href="https://github.com/ahmedbey/gesturesensing" class="btn">View on GitHub</a>
+      <a href="https://github.com/ahmedbey/gesturesensing/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/ahmedbey/gesturesensing/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <p>
+  </p>
+    
+    
+    
+  
+  
+    <div id="content">
+      <h1>
+<a id="motion-sensing-using-the-doppler-effect" class="anchor" href="#motion-sensing-using-the-doppler-effect" aria-hidden="true"><span class="octicon octicon-link"></span></a>Motion sensing using the doppler effect</h1>
+      <p>
+        Recently I stumbled upon <a href="http://research.microsoft.com/en-us/um/redmond/groups/cue/publications/guptasoundwavechi2012.pdf">an interesting paper</a> for
+        implementing motion sensing requiring no special hardware, <i>only a speaker and mic</i>! Unfortunately the paper didn't include
+        code to test it, so I decided to reproduce it here on the web!
+      </p>
+      
+        
+      
+
+<pre><code>  &lt;h2&gt;What is the doppler effect?&lt;/h2&gt;
+  &lt;p&gt;
+    First of all, what is the doppler effect?
+    The &lt;a href="http://en.wikipedia.org/wiki/Doppler_effect"&gt;doppler effect&lt;/a&gt; is a physical phenomenom which affects waves in motion.
+    The standard example is the effect on a fire engine siren as it quickly drives
+    past. When it moves &lt;i&gt;towards&lt;/i&gt; you the sound waves are compressed, and so the
+    frequency becomes &lt;i&gt;higher&lt;/i&gt;, and
+    when it moves &lt;i&gt;away&lt;/i&gt; from you the frequency becomes &lt;i&gt;lower&lt;/i&gt;.
+  &lt;/p&gt;
+  &lt;div id="doppler-video"&gt;&lt;/div&gt;
+  &lt;p&gt;
+    This phenomenon actually has really wonderful applications in astronomy for figuring the speed
+    at which galaxies are moving towards or away from us by looking at the frequency shift of light,
+    but I digress.
+  &lt;/p&gt;
+  &lt;p&gt;
+    Anyway, it's important to realize that the doppler effect would also occur
+    if you were to run towards the siren, rather than the siren moving towards you.
+    We'll use this principle in the next section.
+  &lt;/p&gt;
+
+  &lt;h2&gt;Measuring the doppler effect&lt;/h2&gt;
+  &lt;p&gt;
+    In order to measure the doppler effect for motion detection on a conventional computer,
+    what you can do is send out a sinusoid at some known (inaudible) frequency, say, 20 kHz.
+    If something is moving in the room, then, after the sinusoid has bounced around on the walls and into the microphone, the
+    sound will shift in frequency. This can be measured by looking at the frequency spectrum
+    in the nearby region of the 20 kHz tone.
+  &lt;/p&gt;
+  &lt;div&gt;
+    &lt;canvas id="spectrum" width="700" height="100"&gt;&lt;/canvas&gt;
+    &lt;button id="btn-activate" class="pure-button pure-button-primary"&gt;Press to see the effect of a 20 kHz tone, after it has bounced around the room&lt;/button&gt;
+    &lt;div id="spectrum-axes"&gt;
+      &lt;span class="left-axis"&gt;0 kHz&lt;/span&gt;&lt;span class="right-axis"&gt;22 kHz&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;p&gt;
+    &lt;span class="warn"&gt;Note that you'll need to run Chrome with a fairly high speaker-volume for this to work optimally.&lt;/span&gt;
+  &lt;/p&gt;
+  &lt;p&gt;
+    The frequency spectrum of the microphone input is plotted above. The peak towards the right
+    is due to the 20 kHz tone we're sending out. Try &lt;span data-note="440" class="data-note"&gt;whistling&lt;/span&gt; to see the spectrum change.
+  &lt;/p&gt;
+  &lt;div&gt;
+    &lt;canvas id="spectrum-zoom" width="700" height="100"&gt;&lt;/canvas&gt;
+    &lt;div id="spectrum-zoom-axes"&gt;
+      &lt;span class="left-axis"&gt;19 kHz&lt;/span&gt; &lt;span class="right-axis"&gt;21 kHz&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;p&gt;
+    Here's a closer look, zooming in on the 20 kHz region.
+    Try moving your hand &lt;i&gt;towards&lt;/i&gt;
+    the mic/computer to see the bulge shift to &lt;i&gt;higher&lt;/i&gt; frequencies, and
+    &lt;i&gt;away&lt;/i&gt; from the computer to see it shift to &lt;i&gt;lower&lt;/i&gt; frequencies.
+  &lt;/p&gt;
+
+  &lt;h2&gt;Applications&lt;/h2&gt;
+  &lt;p&gt;
+    Now for the fun applications!
+  &lt;/p&gt;
+
+  &lt;h3&gt;Motion sensing&lt;/h3&gt;
+  &lt;p&gt;
+    The most obvious application for this is motion sensing.
+    Below I've calculated the left and right bandwidth of the 20 kHz
+    region (defined as the number of frequencies to the left and right
+    that are within 99.9% in amplitude of the 20 kHz tone).
+    I've then attached their difference to the size of the box.
+  &lt;/p&gt;
+  &lt;canvas id="ball" width="700" height="100"&gt;&lt;/canvas&gt;
+  &lt;p&gt;
+    The effect this produces is that when you move your hand &lt;i&gt;towards&lt;/i&gt;
+    the microphone, the box becomes smaller (you're &lt;i&gt;pushing&lt;/i&gt;
+    it inwards), and if you move your hand &lt;i&gt;away&lt;/i&gt; from the microphone,
+    the box becomes larger (you're &lt;i&gt;pulling&lt;/i&gt; it outwards).
+  &lt;/p&gt;
+
+  &lt;h3&gt;Scrolling&lt;/h3&gt;
+  &lt;div id="scrolling-video"&gt;&lt;/div&gt;
+  &lt;p&gt;
+    A cool application to motion sensing, as suggested by the
+    &lt;a href="http://research.microsoft.com/en-us/um/redmond/groups/cue/publications/guptasoundwavechi2012.pdf"&gt;SoundWave paper&lt;/a&gt;,
+    is scrolling (see the video above). Click below to try it out.
+  &lt;/p&gt;
+  &lt;div id="scroll-btn-container"&gt;
+    &lt;button id="scroll-btn"
+            class="pure-button pure-button-primary"
+            data-active-text="Stop scrolling hands-free"
+            data-inactive-text="Start scrolling hands-free"&gt;
+      Start hands-free scrolling
+    &lt;/button&gt;
+  &lt;/div&gt;
+  &lt;p&gt;
+    This implementation doesn't have the double-tap feature for reversing
+    the scrolling-direction, instead it's just using the left and right bandwidth-difference.
+    Thus if you want to scroll down you have to move your hand
+    &lt;i&gt;quickly towards&lt;/i&gt; the computer, and &lt;i&gt;slowly away&lt;/i&gt; from the computer.
+  &lt;/p&gt;
+
+  &lt;h3&gt;Theremin&lt;/h3&gt;
+  &lt;div id="theremin-video"&gt;&lt;/div&gt;
+  &lt;p&gt;
+    We can also create an instrument with this by simply modulating
+    the frequency of some base-tone, say at 440 Hz, based on the
+    difference between the left and right bandwidth!
+  &lt;/p&gt;
+  &lt;div id="theremin-btn-container"&gt;
+    &lt;button id="theremin-btn"
+            class="pure-button pure-button-primary"
+            data-active-text="Stop instrument"
+            data-inactive-text="Start instrument"&gt;
+      Start instrument
+    &lt;/button&gt;
+  &lt;/div&gt;
+  &lt;p&gt;
+    This is reminiscent of a Theremin, in that you can contol
+    sound by moving your hands in free space, yet different
+    in that the Theremin is able to measure absolute distance from the base,
+    whereas we can only measure relative motion.
+  &lt;/p&gt;
+
+  &lt;h2&gt;Library&lt;/h2&gt;
+  &lt;p&gt;
+    Did this give you any ideas? I also created &lt;a href="https://github.com/DanielRapp/doppler"&gt;a small library&lt;/a&gt; to play around with this.
+    Just run
+  &lt;/p&gt;
+    &lt;pre&gt;&lt;code class="javascript"&gt;
+</code></pre>
+
+<p>doppler.init(function(bandwidth) {
+    var diff = bandwidth.left - bandwidth.right;
+  });
+        
+      </p>
+<p>
+        to start experimenting.
+      </p>
+
+<pre><code>  &lt;div id="author"&gt;
+    Written by &lt;a href="https://github.com/DanielRapp"&gt;Daniel Rapp&lt;/a&gt;.
+    Check out the code for this &lt;a href="https://github.com/DanielRapp/doppler"&gt;on Github&lt;/a&gt;.
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css"&gt;
+&lt;script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+
+&lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://www.youtube.com/iframe_api"&gt;&lt;/script&gt;
+&lt;script src="libs/data-note.js"&gt;&lt;/script&gt;
+&lt;script src="script.js"&gt;&lt;/script&gt;
+&lt;script src="viz.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  window.addEventListener('load', function(e) {
+    document.getElementById('btn-activate').addEventListener('click', function(e) {
+      var self = this;
+
+      navigator.getUserMedia_ = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
+      navigator.getUserMedia_({ audio: { optional: [{ echoCancellation: false }] } }, function(stream) {
+        handleMic(stream, readMic);
+        showAxes();
+
+        // Self-destruct!
+        self.parentNode.removeChild(self);
+      }, function() { console.log('Error!') });
+    });
+  });
+
+  function onYouTubeIframeAPIReady() {
+    new YT.Player('theremin-video', {
+      videoId: 'w5qf9O6c20o',
+      width: '700',
+      height: '200',
+      playerVars: {
+        start: 15,
+        controls: 0,
+        autoplay: 0,
+        disablekb: 1,
+        enablejsapi: 1,
+        iv_load_policy: 3,
+        modestbranding: 1,
+        showinfo: 0
+      },
+      events: {
+        onReady: function(e) {
+          e.target.setVolume(20);
+        }
+      }
+    });
+
+    new YT.Player('scrolling-video', {
+      videoId: 'rFM59B3tYI4',
+      width: '700',
+      height: '200',
+      playerVars: {
+        start: 77,
+        controls: 0,
+        autoplay: 0,
+        disablekb: 1,
+        enablejsapi: 1,
+        iv_load_policy: 3,
+        modestbranding: 1,
+        showinfo: 0
+      }
+    });
+
+    new YT.Player('doppler-video', {
+      videoId: 'imoxDcn2Sgo',
+      width: '700',
+      height: '200',
+      playerVars: {
+        start: 7,
+        controls: 0,
+        autoplay: 0,
+        disablekb: 1,
+        enablejsapi: 1,
+        iv_load_policy: 3,
+        modestbranding: 1,
+        showinfo: 0
+      },
+      events: {
+        onReady: function(e) {
+          // I intentionally set the volume of this
+          // to be really low, so that the user will increase
+          // his/her volume (since the motion sensing works
+          // best at a high volume).
+          e.target.setVolume(4);
+        }
+      }
+    });
+  }
+&lt;/script&gt;
+</code></pre>
+
+<p>
+</p>
+</div>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/ahmedbey/gesturesensing">Gesturesensing</a> is maintained by <a href="https://github.com/ahmedbey">ahmedbey</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
